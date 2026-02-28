@@ -1,6 +1,4 @@
 (function () {
-  var STORAGE_KEY = "kumbara_data";
-
   // Rozet tanımları
   var BADGES = [
     { id: "first_saving", icon: "\u2B50", name: "İlk Adım", desc: "İlk birikimini yap",
@@ -49,19 +47,18 @@
   var badgesCount = document.getElementById("badgesCount");
   var toastContainer = document.getElementById("toastContainer");
 
-  // Veri
-  function loadData() {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      var data = JSON.parse(raw);
-      if (!data.badges) data.badges = [];
-      return data;
-    }
-    return { savings: [], goal: null, badges: [] };
-  }
-
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // Supabase'den veri yükle
+  async function loadData() {
+    var results = await Promise.all([
+      DB.fetchSavings(),
+      DB.getGoal(),
+      DB.getBadges(),
+    ]);
+    return {
+      savings: results[0],
+      goal: results[1],
+      badges: results[2],
+    };
   }
 
   // Para formatla
@@ -94,7 +91,6 @@
 
   // --- Animasyonlar ---
 
-  // Konfeti patlaması
   function createConfetti(intensity) {
     var canvas = document.createElement("canvas");
     canvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;";
@@ -154,7 +150,6 @@
     requestAnimationFrame(animate);
   }
 
-  // Sayaç animasyonu (count-up)
   function animateCountUp(from, to) {
     var duration = 800;
     var startTime = null;
@@ -176,10 +171,8 @@
     requestAnimationFrame(step);
   }
 
-  // Pulse efekti
   function triggerPulse() {
     totalSection.classList.remove("pulse");
-    // Force reflow to restart animation
     void totalSection.offsetWidth;
     totalSection.classList.add("pulse");
     totalSection.addEventListener("animationend", function handler() {
@@ -233,9 +226,9 @@
 
   // --- Render ---
 
-  function render(options) {
+  async function render(options) {
     options = options || {};
-    var data = loadData();
+    var data = await loadData();
     var total = getTotal(data.savings);
 
     // Toplam — animasyonlu veya direkt
@@ -279,7 +272,6 @@
     items.forEach(function (item, index) {
       var div = document.createElement("div");
       div.className = "history-item";
-      // Yeni eklenen kayıt (listenin ilk elemanı) slide-in animasyonu alır
       if (options.animate && index === 0) {
         div.className += " history-item-new";
       }
@@ -311,58 +303,54 @@
   // --- Event Handlers ---
 
   // Birikim ekle
-  addForm.addEventListener("submit", function (e) {
+  addForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     var amount = parseFloat(amountInput.value);
     if (isNaN(amount) || amount <= 0) return;
 
-    var data = loadData();
-    var previousTotal = getTotal(data.savings);
-    var id =
-      data.savings.length > 0
-        ? Math.max.apply(null, data.savings.map(function (s) { return s.id; })) + 1
-        : 1;
+    var note = noteInput.value.trim();
 
-    data.savings.push({
-      id: id,
-      amount: amount,
-      note: noteInput.value.trim(),
-      date: new Date().toISOString(),
-    });
+    // Önceki toplamı hesapla (animasyon için)
+    var currentData = await loadData();
+    var previousTotal = getTotal(currentData.savings);
 
-    var newBadges = checkBadges(data, amount);
-    saveData(data);
+    // Supabase'e kaydet
+    await DB.addSaving(amount, note);
+
+    // Rozetleri kontrol et (güncel veriyle)
+    var updatedData = await loadData();
+    var newBadges = checkBadges(updatedData, amount);
+    if (newBadges.length > 0) {
+      await DB.saveBadges(updatedData.badges);
+    }
+
     amountInput.value = "";
     noteInput.value = "";
     amountInput.focus();
 
-    render({ animate: true, previousTotal: previousTotal });
+    await render({ animate: true, previousTotal: previousTotal });
 
     // Pulse efekti
     triggerPulse();
 
-    // Konfeti — yoğunluk tutara göre
+    // Konfeti
     var intensity = amount >= 500 ? "heavy" : amount >= 100 ? "medium" : "light";
     createConfetti(intensity);
 
-    // Rozet toast'ları (kendi hafif konfetileri ile)
+    // Rozet toast'ları
     newBadges.forEach(function (badge) {
       showBadgeToast(badge);
     });
   });
 
   // Birikim sil
-  historyList.addEventListener("click", function (e) {
+  historyList.addEventListener("click", async function (e) {
     var btn = e.target.closest(".history-item-delete");
     if (!btn) return;
 
     var id = parseInt(btn.getAttribute("data-id"), 10);
-    var data = loadData();
-    data.savings = data.savings.filter(function (s) {
-      return s.id !== id;
-    });
-    saveData(data);
-    render();
+    await DB.deleteSaving(id);
+    await render();
   });
 
   // Hedef düzenle
@@ -370,33 +358,38 @@
     var isVisible = goalForm.style.display !== "none";
     goalForm.style.display = isVisible ? "none" : "block";
     if (!isVisible) {
-      var data = loadData();
-      goalInput.value = data.goal || "";
-      goalInput.focus();
+      DB.getGoal().then(function (goal) {
+        goalInput.value = goal || "";
+        goalInput.focus();
+      });
     }
   });
 
-  saveGoalBtn.addEventListener("click", function () {
+  saveGoalBtn.addEventListener("click", async function () {
     var val = parseFloat(goalInput.value);
     if (isNaN(val) || val <= 0) return;
-    var data = loadData();
-    data.goal = val;
+
+    await DB.setGoal(val);
+
+    // Rozetleri kontrol et
+    var data = await loadData();
     var newBadges = checkBadges(data, 0);
-    saveData(data);
+    if (newBadges.length > 0) {
+      await DB.saveBadges(data.badges);
+    }
+
     goalForm.style.display = "none";
-    render();
+    await render();
 
     newBadges.forEach(function (badge) {
       showBadgeToast(badge);
     });
   });
 
-  removeGoalBtn.addEventListener("click", function () {
-    var data = loadData();
-    data.goal = null;
-    saveData(data);
+  removeGoalBtn.addEventListener("click", async function () {
+    await DB.setGoal(null);
     goalForm.style.display = "none";
-    render();
+    await render();
   });
 
   // İlk render (animasyonsuz)
