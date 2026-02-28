@@ -4,6 +4,36 @@ var DB = (function () {
 
   var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // --- Auth ---
+
+  async function signUp(email, password) {
+    var { data, error } = await client.auth.signUp({ email: email, password: password });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signIn(email, password) {
+    var { data, error } = await client.auth.signInWithPassword({ email: email, password: password });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signOut() {
+    var { error } = await client.auth.signOut();
+    if (error) throw error;
+  }
+
+  async function getUser() {
+    var { data } = await client.auth.getUser();
+    return data.user;
+  }
+
+  function onAuthStateChange(callback) {
+    return client.auth.onAuthStateChange(callback);
+  }
+
+  // --- Savings ---
+
   async function fetchSavings() {
     var { data, error } = await client
       .from("savings")
@@ -40,6 +70,8 @@ var DB = (function () {
     if (error) throw error;
   }
 
+  // --- Settings ---
+
   async function getSetting(key) {
     var { data, error } = await client
       .from("settings")
@@ -53,7 +85,7 @@ var DB = (function () {
   async function setSetting(key, value) {
     var { error } = await client
       .from("settings")
-      .upsert({ key: key, value: value });
+      .upsert({ key: key, value: value }, { onConflict: "key,user_id" });
     if (error) throw error;
   }
 
@@ -75,6 +107,11 @@ var DB = (function () {
   }
 
   return {
+    signUp: signUp,
+    signIn: signIn,
+    signOut: signOut,
+    getUser: getUser,
+    onAuthStateChange: onAuthStateChange,
     fetchSavings: fetchSavings,
     addSaving: addSaving,
     deleteSaving: deleteSaving,

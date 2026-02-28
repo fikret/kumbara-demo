@@ -7,34 +7,67 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+
+  <!-- Auth -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-card">
+      <h1 class="auth-title">Kumbara</h1>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Giris Yap</button>
+        <button class="auth-tab" data-tab="signup">Kayit Ol</button>
+      </div>
+
+      <div class="auth-message" id="authMessage"></div>
+
+      <!-- Giris Formu -->
+      <form id="loginForm" class="auth-form">
+        <input type="email" id="loginEmail" placeholder="E-posta" required>
+        <input type="password" id="loginPassword" placeholder="Sifre" minlength="6" required>
+        <button type="submit" class="btn btn-primary">Giris Yap</button>
+      </form>
+
+      <!-- Kayit Formu -->
+      <form id="signupForm" class="auth-form" style="display:none;">
+        <input type="email" id="signupEmail" placeholder="E-posta" required>
+        <input type="password" id="signupPassword" placeholder="Sifre (min 6 karakter)" minlength="6" required>
+        <input type="password" id="signupPasswordConfirm" placeholder="Sifre tekrar" minlength="6" required>
+        <button type="submit" class="btn btn-primary">Kayit Ol</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Uygulama -->
+  <div class="container" id="appContainer" style="display:none;">
     <header>
       <h1>Kumbara</h1>
+      <div class="user-bar">
+        <span class="user-email" id="userEmail"></span>
+        <button class="btn-icon" id="logoutBtn" title="Cikis yap">&#x2716;</button>
+      </div>
     </header>
 
     <!-- Toplam Birikim -->
     <section class="total-section">
       <p class="total-label">Toplam Birikim</p>
-      <p class="total-amount" id="totalAmount">₺0,00</p>
+      <p class="total-amount" id="totalAmount">&#8378;0,00</p>
     </section>
 
     <!-- Hedef -->
     <section class="goal-section" id="goalSection">
       <div class="goal-header">
         <span class="goal-label">Hedef: <strong id="goalAmountText">Belirlenmedi</strong></span>
-        <button class="btn-icon" id="editGoalBtn" title="Hedefi düzenle">&#9998;</button>
+        <button class="btn-icon" id="editGoalBtn" title="Hedefi duzenle">&#9998;</button>
       </div>
       <div class="progress-bar-container" id="progressContainer" style="display:none;">
         <div class="progress-bar" id="progressBar"></div>
       </div>
       <p class="progress-text" id="progressText" style="display:none;"></p>
 
-      <!-- Hedef Formu -->
       <div class="goal-form" id="goalForm" style="display:none;">
-        <input type="number" id="goalInput" placeholder="Hedef tutar (₺)" min="0" step="0.01">
+        <input type="number" id="goalInput" placeholder="Hedef tutar" min="0" step="0.01">
         <div class="goal-form-actions">
           <button class="btn btn-small" id="saveGoalBtn">Kaydet</button>
-          <button class="btn btn-small btn-secondary" id="removeGoalBtn">Kaldır</button>
+          <button class="btn btn-small btn-secondary" id="removeGoalBtn">Kaldir</button>
         </div>
       </div>
     </section>
@@ -52,17 +85,17 @@
     <section class="add-section">
       <h2>Birikim Ekle</h2>
       <form id="addForm">
-        <input type="number" id="amountInput" placeholder="Tutar (₺)" min="0.01" step="0.01" required>
+        <input type="number" id="amountInput" placeholder="Tutar" min="0.01" step="0.01" required>
         <input type="text" id="noteInput" placeholder="Not (opsiyonel)" maxlength="100">
         <button type="submit" class="btn btn-primary">Ekle</button>
       </form>
     </section>
 
-    <!-- Birikim Geçmişi -->
+    <!-- Birikim Gecmisi -->
     <section class="history-section">
-      <h2>Birikim Geçmişi</h2>
+      <h2>Birikim Gecmisi</h2>
       <div id="historyList" class="history-list">
-        <p class="empty-state" id="emptyState">Henüz birikim yok.</p>
+        <p class="empty-state" id="emptyState">Henuz birikim yok.</p>
       </div>
     </section>
   </div>

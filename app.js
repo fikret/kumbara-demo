@@ -1,32 +1,41 @@
 (function () {
   // Rozet tanımları
   var BADGES = [
-    { id: "first_saving", icon: "\u2B50", name: "İlk Adım", desc: "İlk birikimini yap",
+    { id: "first_saving", icon: "\u2B50", name: "Ilk Adim", desc: "Ilk birikimini yap",
       check: function (data) { return data.savings.length >= 1; } },
-    { id: "regular_5", icon: "\uD83C\uDFAF", name: "Düzenli", desc: "5 birikim yap",
+    { id: "regular_5", icon: "\uD83C\uDFAF", name: "Duzenli", desc: "5 birikim yap",
       check: function (data) { return data.savings.length >= 5; } },
     { id: "regular_10", icon: "\uD83D\uDCAA", name: "Azimli", desc: "10 birikim yap",
       check: function (data) { return data.savings.length >= 10; } },
     { id: "regular_25", icon: "\uD83C\uDFC6", name: "Veteran", desc: "25 birikim yap",
       check: function (data) { return data.savings.length >= 25; } },
-    { id: "total_1k", icon: "\uD83D\uDCB0", name: "Birikmaya Başladı", desc: "Toplam ₺1.000'e ulaş",
+    { id: "total_1k", icon: "\uD83D\uDCB0", name: "Birikmaya Basladi", desc: "Toplam 1.000'e ulas",
       check: function (data) { return getTotal(data.savings) >= 1000; } },
-    { id: "total_5k", icon: "\uD83D\uDC8E", name: "Ciddi Birikimci", desc: "Toplam ₺5.000'e ulaş",
+    { id: "total_5k", icon: "\uD83D\uDC8E", name: "Ciddi Birikimci", desc: "Toplam 5.000'e ulas",
       check: function (data) { return getTotal(data.savings) >= 5000; } },
-    { id: "total_10k", icon: "\uD83D\uDC51", name: "Kral", desc: "Toplam ₺10.000'e ulaş",
+    { id: "total_10k", icon: "\uD83D\uDC51", name: "Kral", desc: "Toplam 10.000'e ulas",
       check: function (data) { return getTotal(data.savings) >= 10000; } },
-    { id: "big_save", icon: "\uD83D\uDE80", name: "Büyük Hamle", desc: "Tek seferde ₺500+ ekle",
+    { id: "big_save", icon: "\uD83D\uDE80", name: "Buyuk Hamle", desc: "Tek seferde 500+ ekle",
       check: function (data, lastAmount) { return lastAmount >= 500; } },
-    { id: "goal_set", icon: "\uD83C\uDFAF", name: "Hedef Koyucu", desc: "İlk hedefini belirle",
+    { id: "goal_set", icon: "\uD83C\uDFAF", name: "Hedef Koyucu", desc: "Ilk hedefini belirle",
       check: function (data) { return data.goal && data.goal > 0; } },
-    { id: "goal_reached", icon: "\uD83C\uDFC5", name: "Hedef Avcısı", desc: "Hedefe ulaş",
+    { id: "goal_reached", icon: "\uD83C\uDFC5", name: "Hedef Avcisi", desc: "Hedefe ulas",
       check: function (data) { return data.goal && data.goal > 0 && getTotal(data.savings) >= data.goal; } },
   ];
 
-  // Konfeti renkleri
   var CONFETTI_COLORS = ["#0f3460", "#533483", "#e94560", "#f5a623", "#2ecc71", "#3498db", "#9b59b6", "#f1c40f"];
 
-  // DOM
+  // --- Auth DOM ---
+  var authContainer = document.getElementById("authContainer");
+  var appContainer = document.getElementById("appContainer");
+  var loginForm = document.getElementById("loginForm");
+  var signupForm = document.getElementById("signupForm");
+  var authMessage = document.getElementById("authMessage");
+  var authTabs = document.querySelectorAll(".auth-tab");
+  var userEmailEl = document.getElementById("userEmail");
+  var logoutBtn = document.getElementById("logoutBtn");
+
+  // --- App DOM ---
   var totalAmountEl = document.getElementById("totalAmount");
   var totalSection = document.querySelector(".total-section");
   var addForm = document.getElementById("addForm");
@@ -47,7 +56,107 @@
   var badgesCount = document.getElementById("badgesCount");
   var toastContainer = document.getElementById("toastContainer");
 
-  // Supabase'den veri yükle
+  // --- Auth UI ---
+
+  function showAuth() {
+    authContainer.style.display = "flex";
+    appContainer.style.display = "none";
+    authMessage.className = "auth-message";
+    authMessage.textContent = "";
+  }
+
+  function showApp(user) {
+    authContainer.style.display = "none";
+    appContainer.style.display = "block";
+    userEmailEl.textContent = user.email;
+    render();
+  }
+
+  function showAuthError(msg) {
+    authMessage.className = "auth-message error";
+    authMessage.textContent = msg;
+  }
+
+  function showAuthSuccess(msg) {
+    authMessage.className = "auth-message success";
+    authMessage.textContent = msg;
+  }
+
+  // Auth tabs
+  authTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      authTabs.forEach(function (t) { t.classList.remove("active"); });
+      tab.classList.add("active");
+      var target = tab.getAttribute("data-tab");
+      if (target === "login") {
+        loginForm.style.display = "flex";
+        signupForm.style.display = "none";
+      } else {
+        loginForm.style.display = "none";
+        signupForm.style.display = "flex";
+      }
+      authMessage.className = "auth-message";
+      authMessage.textContent = "";
+    });
+  });
+
+  // Kayit
+  signupForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var email = document.getElementById("signupEmail").value.trim();
+    var password = document.getElementById("signupPassword").value;
+    var confirm = document.getElementById("signupPasswordConfirm").value;
+
+    if (password !== confirm) {
+      showAuthError("Sifreler eslesmiyor.");
+      return;
+    }
+
+    try {
+      await DB.signUp(email, password);
+      showAuthSuccess("Onay e-postasi gonderildi! Lutfen e-postanizi kontrol edin ve onay linkine tiklayin.");
+      signupForm.reset();
+    } catch (err) {
+      showAuthError(err.message || "Kayit sirasinda bir hata olustu.");
+    }
+  });
+
+  // Giris
+  loginForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var email = document.getElementById("loginEmail").value.trim();
+    var password = document.getElementById("loginPassword").value;
+
+    try {
+      await DB.signIn(email, password);
+      // onAuthStateChange will handle the rest
+    } catch (err) {
+      var msg = err.message || "Giris sirasinda bir hata olustu.";
+      if (msg.includes("Invalid login")) {
+        msg = "E-posta veya sifre hatali.";
+      } else if (msg.includes("Email not confirmed")) {
+        msg = "E-posta adresiniz henuz onaylanmadi. Lutfen e-postanizi kontrol edin.";
+      }
+      showAuthError(msg);
+    }
+  });
+
+  // Cikis
+  logoutBtn.addEventListener("click", async function () {
+    await DB.signOut();
+  });
+
+  // Auth state listener
+  DB.onAuthStateChange(function (event, session) {
+    if (session && session.user) {
+      showApp(session.user);
+    } else {
+      showAuth();
+    }
+  });
+
+  // --- Data ---
+
   async function loadData() {
     var results = await Promise.all([
       DB.fetchSavings(),
@@ -61,7 +170,6 @@
     };
   }
 
-  // Para formatla
   function formatCurrency(amount) {
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
@@ -70,7 +178,6 @@
     }).format(amount);
   }
 
-  // Tarih formatla
   function formatDate(dateStr) {
     var d = new Date(dateStr);
     return d.toLocaleDateString("tr-TR", {
@@ -82,7 +189,6 @@
     });
   }
 
-  // Toplam hesapla
   function getTotal(savings) {
     return savings.reduce(function (sum, s) {
       return sum + s.amount;
@@ -199,7 +305,7 @@
     toast.className = "badge-toast";
     toast.innerHTML =
       '<span class="badge-toast-icon">' + badge.icon + "</span>" +
-      '<span class="badge-toast-text">Rozet açıldı!<small>' + badge.name + "</small></span>";
+      '<span class="badge-toast-text">Rozet acildi!<small>' + badge.name + "</small></span>";
     toastContainer.appendChild(toast);
     createConfetti("light");
     setTimeout(function () {
@@ -231,14 +337,12 @@
     var data = await loadData();
     var total = getTotal(data.savings);
 
-    // Toplam — animasyonlu veya direkt
     if (options.animate && typeof options.previousTotal === "number") {
       animateCountUp(options.previousTotal, total);
     } else {
       totalAmountEl.textContent = formatCurrency(total);
     }
 
-    // Hedef
     if (data.goal && data.goal > 0) {
       goalAmountText.textContent = formatCurrency(data.goal);
       var pct = Math.min((total / data.goal) * 100, 100);
@@ -246,19 +350,17 @@
       progressBar.style.width = pct + "%";
       progressText.style.display = "block";
       progressText.textContent =
-        "%" + pct.toFixed(1) + " tamamlandı — " +
+        "%" + pct.toFixed(1) + " tamamlandi — " +
         formatCurrency(data.goal - total > 0 ? data.goal - total : 0) +
-        " kaldı";
+        " kaldi";
     } else {
       goalAmountText.textContent = "Belirlenmedi";
       progressContainer.style.display = "none";
       progressText.style.display = "none";
     }
 
-    // Rozetler
     renderBadges(data);
 
-    // Geçmiş
     var items = data.savings.slice().reverse();
     var existingItems = historyList.querySelectorAll(".history-item");
     existingItems.forEach(function (el) { el.remove(); });
@@ -300,9 +402,8 @@
     return div.innerHTML;
   }
 
-  // --- Event Handlers ---
+  // --- App Event Handlers ---
 
-  // Birikim ekle
   addForm.addEventListener("submit", async function (e) {
     e.preventDefault();
     var amount = parseFloat(amountInput.value);
@@ -310,14 +411,11 @@
 
     var note = noteInput.value.trim();
 
-    // Önceki toplamı hesapla (animasyon için)
     var currentData = await loadData();
     var previousTotal = getTotal(currentData.savings);
 
-    // Supabase'e kaydet
     await DB.addSaving(amount, note);
 
-    // Rozetleri kontrol et (güncel veriyle)
     var updatedData = await loadData();
     var newBadges = checkBadges(updatedData, amount);
     if (newBadges.length > 0) {
@@ -330,20 +428,16 @@
 
     await render({ animate: true, previousTotal: previousTotal });
 
-    // Pulse efekti
     triggerPulse();
 
-    // Konfeti
     var intensity = amount >= 500 ? "heavy" : amount >= 100 ? "medium" : "light";
     createConfetti(intensity);
 
-    // Rozet toast'ları
     newBadges.forEach(function (badge) {
       showBadgeToast(badge);
     });
   });
 
-  // Birikim sil
   historyList.addEventListener("click", async function (e) {
     var btn = e.target.closest(".history-item-delete");
     if (!btn) return;
@@ -353,7 +447,6 @@
     await render();
   });
 
-  // Hedef düzenle
   editGoalBtn.addEventListener("click", function () {
     var isVisible = goalForm.style.display !== "none";
     goalForm.style.display = isVisible ? "none" : "block";
@@ -371,7 +464,6 @@
 
     await DB.setGoal(val);
 
-    // Rozetleri kontrol et
     var data = await loadData();
     var newBadges = checkBadges(data, 0);
     if (newBadges.length > 0) {
@@ -391,7 +483,4 @@
     goalForm.style.display = "none";
     await render();
   });
-
-  // İlk render (animasyonsuz)
-  render();
 })();

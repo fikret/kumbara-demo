@@ -11,6 +11,127 @@ body {
   min-height: 100vh;
 }
 
+/* Auth */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.auth-title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #16213e;
+  margin-bottom: 24px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  background: #f0f2f5;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  color: #888;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  background: #fff;
+  color: #16213e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form input {
+  padding: 12px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: #0f3460;
+}
+
+.auth-message {
+  display: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.auth-message.error {
+  display: block;
+  background: #fef0f0;
+  color: #e74c3c;
+  border: 1px solid #f5c6cb;
+}
+
+.auth-message.success {
+  display: block;
+  background: #f0fef4;
+  color: #27ae60;
+  border: 1px solid #c3e6cb;
+}
+
+/* User bar */
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.user-bar .btn-icon {
+  font-size: 0.8rem;
+  color: #aaa;
+  padding: 2px 6px;
+}
+
+.user-bar .btn-icon:hover {
+  color: #e74c3c;
+  background: #fef0f0;
+}
+
 .container {
   max-width: 480px;
   margin: 0 auto;
