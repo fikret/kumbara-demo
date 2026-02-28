@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kumbara</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Kumbara</h1>
+    </header>
+
+    <!-- Toplam Birikim -->
+    <section class="total-section">
+      <p class="total-label">Toplam Birikim</p>
+      <p class="total-amount" id="totalAmount">₺0,00</p>
+    </section>
+
+    <!-- Hedef -->
+    <section class="goal-section" id="goalSection">
+      <div class="goal-header">
+        <span class="goal-label">Hedef: <strong id="goalAmountText">Belirlenmedi</strong></span>
+        <button class="btn-icon" id="editGoalBtn" title="Hedefi düzenle">&#9998;</button>
+      </div>
+      <div class="progress-bar-container" id="progressContainer" style="display:none;">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-text" id="progressText" style="display:none;"></p>
+
+      <!-- Hedef Formu -->
+      <div class="goal-form" id="goalForm" style="display:none;">
+        <input type="number" id="goalInput" placeholder="Hedef tutar (₺)" min="0" step="0.01">
+        <div class="goal-form-actions">
+          <button class="btn btn-small" id="saveGoalBtn">Kaydet</button>
+          <button class="btn btn-small btn-secondary" id="removeGoalBtn">Kaldır</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rozetler -->
+    <section class="badges-section">
+      <div class="badges-header">
+        <h2>Rozetler</h2>
+        <span class="badges-count" id="badgesCount">0/10</span>
+      </div>
+      <div class="badges-grid" id="badgesGrid"></div>
+    </section>
+
+    <!-- Birikim Ekleme Formu -->
+    <section class="add-section">
+      <h2>Birikim Ekle</h2>
+      <form id="addForm">
+        <input type="number" id="amountInput" placeholder="Tutar (₺)" min="0.01" step="0.01" required>
+        <input type="text" id="noteInput" placeholder="Not (opsiyonel)" maxlength="100">
+        <button type="submit" class="btn btn-primary">Ekle</button>
+      </form>
+    </section>
+
+    <!-- Birikim Geçmişi -->
+    <section class="history-section">
+      <h2>Birikim Geçmişi</h2>
+      <div id="historyList" class="history-list">
+        <p class="empty-state" id="emptyState">Henüz birikim yok.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="app.js"></script>
+</body>
+</html>
